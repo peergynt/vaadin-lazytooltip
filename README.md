@@ -18,26 +18,30 @@ Once added to a component, you should define a handler for the tooltip:
 
     lazyTooltip.setTooltipHandler(handler);
 
-A Lazy Tootlip handler must implement generateTooltip():
+A Lazy Tootlip handler must implement `generateTooltip()`:
 
     public interface LazyTooltipHandler {
         public void generateTooltip(LazyTooltipUpdater updater);
     }
 
-generateTooltip() is invoked (lazily) when a tooltip is requested by the client-side widget.
+`generateTooltip()` is invoked (lazily) when a tooltip is requested by the client-side widget.
 `LazyTooltipUpdater` is the interface that allows the tooltip to be updated.
 `updateTooltip(String tooltip)` must be used to update the content of the tooltip.
 The content of the tooltip will be displayed as HTML (see `AbstractComponent.setDescription(String description)`).
 
 With Java 8, you could use a lambda expression to define the tooltip handler:
 
-    lazyTooltip.setTooltipHandler((LazyTooltipUpdater updater) -> updater.updateTooltip("This is a static tooltip"));
+    lazyTooltip.setTooltipHandler((LazyTooltipUpdater updater) ->
+        updater.updateTooltip("This is a static tooltip"));
 
-Note that `updateTooltip()` must be invoked from the Vaadin UI thread to properly update the client component. `updateTooltip()` can also be called multiple times and the tooltip will be updated dynamically on the client side as long as the tooltip is open.
+Note that `updateTooltip()` must be invoked from the Vaadin UI thread to properly update the client component.
+
+`updateTooltip()` can also be called multiple times and the tooltip will be updated dynamically on the client side as long as the tooltip is open.
 
 ## How to Build
 
 This add-on is built with maven.
+
 `mvn package` will build all the artifacts in `target`.
 
 ## License
