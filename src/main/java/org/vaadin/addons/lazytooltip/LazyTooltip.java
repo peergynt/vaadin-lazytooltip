@@ -53,6 +53,13 @@ public class LazyTooltip extends AbstractExtension implements LazyTooltipServerR
     }
 
     @Override
+    public boolean isConnectorEnabled() {
+        // Always returns 'enabled' so that lazy tooltips work 
+        // even if the extended component is disabled.
+        return true;
+    };
+
+    @Override
     public LazyTooltipState getState() {
         return (LazyTooltipState) super.getState();
     }
