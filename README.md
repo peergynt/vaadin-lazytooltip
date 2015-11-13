@@ -1,6 +1,6 @@
 # vaadin-lazytooltip
 
-Lazy Tooltip Add-on is an add-on for [Vaadin](https://vaadin.com). It requires Vaadin 7.2.7 or newer.
+Lazy Tooltip Add-on is an add-on for [Vaadin](https://vaadin.com). It requires Vaadin 7.3+.
 
 ## Installation
 
@@ -40,9 +40,13 @@ Note that `updateTooltip()` must be invoked from the Vaadin UI thread to properl
 
 ## How to Build
 
-This add-on is built with maven.
+This add-on is built with maven. To build and run the demo:
 
-`mvn package` will build all the artifacts in `target`.
+`mvn clean install`
+`cd demo`
+`mvn jetty:run`
+
+To see the demo, navigate to http://localhost:8080/
 
 ## License
 
