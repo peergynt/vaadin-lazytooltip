@@ -8,6 +8,18 @@ The Vaadin add-ons installation is described on the Vaadin website: https://vaad
 
 Note that the Lazy Tooltip Add-on will replace the VTooltip widget with VLazyTooltip (see `LazyTooltipWidgetset.gwt.xml`).
 
+## How to Build
+
+This add-on is built with maven. To build and run the demo:
+
+`mvn clean install`
+
+`cd demo`
+
+`mvn jetty:run`
+
+To see the demo, navigate to http://localhost:8080/
+
 ## Usage
 
 A Lazy Tooltip can be added to any Vaadin component:
@@ -37,18 +49,6 @@ With Java 8, you could use a lambda expression to define the tooltip handler:
 Note that `updateTooltip()` must be invoked from the Vaadin UI thread to properly update the client component.
 
 `updateTooltip()` can also be called multiple times and the tooltip will be updated dynamically on the client side as long as the tooltip is open.
-
-## How to Build
-
-This add-on is built with maven. To build and run the demo:
-
-`mvn clean install`
-
-`cd demo`
-
-`mvn jetty:run`
-
-To see the demo, navigate to http://localhost:8080/
 
 ## License
 
