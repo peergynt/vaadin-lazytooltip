@@ -14,7 +14,7 @@ This add-on is built with maven. To build and run the demo:
 
 `mvn clean install`
 
-`cd demo`
+`cd lazytooltip-demo`
 
 `mvn jetty:run`
 
