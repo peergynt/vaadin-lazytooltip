@@ -32,7 +32,7 @@ public class LazyTooltipConnector extends AbstractExtensionConnector {
             public void updateTooltip(long tooltipId, String elementId, String tooltipText) {
                 // FIXME: should we fire an event here to update the tooltip internally?
                 if (getWidget().isActiveTooltip(tooltipId)) {
-                    Logger.getLogger(LazyTooltipConnector.class.getName()).info("(LZT) updating tooltip " + tooltipId + " in client");
+                    Logger.getLogger(LazyTooltipConnector.class.getName()).finer("(LZT) updating tooltip " + tooltipId + " in client");
                     getWidget().updateTooltip(elementId, tooltipText);
                 }
             }
@@ -58,7 +58,7 @@ public class LazyTooltipConnector extends AbstractExtensionConnector {
         }
         String widgetID = widget.getElement().getId();
         long tooltipId = getWidget().getNewTooltipId();
-        Logger.getLogger(LazyTooltipConnector.class.getName()).info("(LZT) request tooltip update for tooltip " +
+        Logger.getLogger(LazyTooltipConnector.class.getName()).finer("(LZT) request tooltip update for tooltip " +
                          tooltipId + " (class=" + className + ", widget=" + widgetID + ")");
         rpc.updateTooltip(tooltipId, className, widgetID);
         return new LazyTooltipInfo("Loading...", connector.getState().errorMessage);

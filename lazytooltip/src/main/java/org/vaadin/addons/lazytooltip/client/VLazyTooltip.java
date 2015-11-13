@@ -64,35 +64,12 @@ public class VLazyTooltip extends VTooltip {
     public VLazyTooltip() {
         super();
 
-// FIXME: not needed
-//        em = findErrorMessage((com.google.gwt.user.client.ui.Panel) getWidget());
-//        description = findDescriptionElement(getWidget());
-
         FlowPanel layout = new FlowPanel();
         setWidget(layout);
         layout.add(em);
         description.setPropertyString("className", getStyleName() + "-text");
         DOM.appendChild(layout.getElement(), description);
     }
-
-//    private VErrorMessage findErrorMessage(com.google.gwt.user.client.ui.Panel panel) {
-//        for (Widget widget : panel) {
-//            if (widget instanceof VErrorMessage) {
-//                return (VErrorMessage) widget;
-//            }
-//        }
-//        return null;
-//    }
-//
-//    private Element findDescriptionElement(Widget widget) {
-//        String className = getStyleName() + "-text";
-//        for (Element e = widget.getElement().getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
-//            if (e.hasClassName(className)) {
-//                return e;
-//            }
-//        }
-//        return null;
-//    }
 
     /**
      * Show the tooltip with the provided info for assistive devices.
@@ -539,25 +516,6 @@ public class VLazyTooltip extends VTooltip {
             return null;
         }
 
-// FIXME: not needed
-//        private String getWidgetId(Element e) {
-//            String elementId = "";
-//            Element element = e;
-//            while (element != null) {
-//                String id = element.getId();
-//                if ((id != null) && (!id.isEmpty())) {
-//                    elementId = id;
-//                    break;
-//                }
-//                // Only check the parent if this element is not a widget
-//                if (Event.getEventListener(element) != null) {
-//                    break;
-//                }
-//                element = element.getParentElement();
-//            }
-//            return elementId;
-//        }
-
         private Widget getParentWidget(Element e) {
             Element element = e;
             while (element != null) {
@@ -665,15 +623,6 @@ public class VLazyTooltip extends VTooltip {
                         return;
                     }
                 }
-
-// FIXME: not needed
-//                if (currentElement != null && isTooltipOpen()) {
-//                    TooltipInfo newTooltip = getTooltipFor(element);
-//                    if (currentTooltipInfo != null
-//                            && currentTooltipInfo.equals(newTooltip)) {
-//                        return;
-//                    }
-//                }
 
                 if (nativeEvent) {
                     info = getTooltipFor(element);
