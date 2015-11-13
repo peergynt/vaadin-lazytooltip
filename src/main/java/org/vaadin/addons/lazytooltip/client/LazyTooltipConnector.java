@@ -61,7 +61,7 @@ public class LazyTooltipConnector extends AbstractExtensionConnector {
         Logger.getLogger(LazyTooltipConnector.class.getName()).info("(LZT) request tooltip update for tooltip " +
                          tooltipId + " (class=" + className + ", widget=" + widgetID + ")");
         rpc.updateTooltip(tooltipId, className, widgetID);
-        return new LazyTooltipInfo("Loading...");
+        return new LazyTooltipInfo("Loading...", connector.getState().errorMessage);
     }
 
     public VLazyTooltip getWidget() {
