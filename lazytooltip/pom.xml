@@ -5,12 +5,12 @@
 	<groupId>org.vaadin.addons</groupId>
 	<artifactId>lazytooltip</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.0</version>
+	<version>1.0.8</version>
 	<name>LazyTooltip Add-on</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<vaadin.version>7.5.9</vaadin.version>
+		<vaadin.version>8.2.1</vaadin.version>
 		<vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
 
 		<!-- ZIP Manifest fields -->
