@@ -1,6 +1,7 @@
 package org.vaadin.addons.lazytooltip.client;
 
 import com.vaadin.client.TooltipInfo;
+import com.vaadin.shared.ui.ContentMode;
 
 public class LazyTooltipInfo extends TooltipInfo {
 
@@ -15,11 +16,11 @@ public class LazyTooltipInfo extends TooltipInfo {
     }
 
     public LazyTooltipInfo(String tooltip, String errorMessage) {
-        super(tooltip, errorMessage);
+        super(tooltip, ContentMode.HTML, errorMessage);
     }
 
     public LazyTooltipInfo(String tooltip, String errorMessage, Object identifier) {
-        super(tooltip, errorMessage, identifier);
+        super(tooltip, ContentMode.HTML, errorMessage, identifier);
     }
 
     public boolean isNeedUpdate() {

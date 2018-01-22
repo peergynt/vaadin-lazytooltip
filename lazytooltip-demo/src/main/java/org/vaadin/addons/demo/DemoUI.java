@@ -18,10 +18,11 @@ import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.server.UserError;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.shared.ui.label.ContentMode;
+import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
@@ -94,11 +95,11 @@ public class DemoUI extends UI
         configurator.configureTooltip(disabledButton);
         grid.addComponent(disabledButton, columnNumber, rowNumber++);
 
-        Button readOnlyButton = new Button("Read-only Button");
-        readOnlyButton.setWidth(100f, Unit.PERCENTAGE);
-        readOnlyButton.setReadOnly(true);
-        configurator.configureTooltip(readOnlyButton);
-        grid.addComponent(readOnlyButton, columnNumber, rowNumber++);
+        CheckBox readOnlyCheckBox = new CheckBox("Read-only CheckBox");
+        readOnlyCheckBox.setWidth(100f, Unit.PERCENTAGE);
+        readOnlyCheckBox.setReadOnly(true);
+        configurator.configureTooltip(readOnlyCheckBox);
+        grid.addComponent(readOnlyCheckBox, columnNumber, rowNumber++);
 
         Label label = new Label("Default Label");
         label.setWidth(100f, Unit.PERCENTAGE);
