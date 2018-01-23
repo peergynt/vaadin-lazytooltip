@@ -6,7 +6,6 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.vaadin.addons.lazytooltip.LazyTooltip;
-import org.vaadin.addons.lazytooltip.LazyTooltipHandler;
 import org.vaadin.addons.lazytooltip.LazyTooltipUpdater;
 
 import javax.servlet.annotation.WebServlet;
@@ -63,7 +62,7 @@ public class DemoUI extends UI
         createColumn(dynamicLazyTooltip, grid, 3);
 
         // Show it in the middle of the screen
-        final VerticalLayout layout = new VerticalLayout();
+        VerticalLayout layout = new VerticalLayout();
         layout.setStyleName("demoContentLayout");
         layout.setSizeFull();
         layout.addComponent(grid);
@@ -112,18 +111,6 @@ public class DemoUI extends UI
         public String getTooltipDesccription();
     }
 
-    private void asyncTooltipUpdate(final LazyTooltipUpdater updater, final String tooltip) {
-        UI ui = UI.getCurrent();
-        if ((ui == null) || (!ui.isAttached())) {
-            return;
-        }
-        ui.access(new Runnable() {
-            public void run() {
-                updater.updateTooltip(tooltip);
-            }
-        });
-    }
-
     private TooltipConfigurator regularTooltip = new TooltipConfigurator() {
         public void configureTooltip(AbstractComponent component) {
             // Standard vaadin tooltip: set the description
@@ -138,12 +125,7 @@ public class DemoUI extends UI
     private TooltipConfigurator staticLazyTooltip = new TooltipConfigurator() {
         public void configureTooltip(AbstractComponent component) {
             LazyTooltip lazyTooltip = LazyTooltip.addToComponent(component);
-            lazyTooltip.setTooltipHandler(new LazyTooltipHandler() {
-                @Override
-                public void generateTooltip(LazyTooltipUpdater updater) {
-                    updater.updateTooltip("This is a static lazy tooltip");
-                }
-            });
+            lazyTooltip.setTooltipHandler(updater -> updater.updateTooltip("This is a static lazy tooltip"));
         }
 
         public String getTooltipDesccription() {
@@ -154,12 +136,9 @@ public class DemoUI extends UI
     private TooltipConfigurator randomLazyTooltip = new TooltipConfigurator() {
         public void configureTooltip(AbstractComponent component) {
             LazyTooltip lazyTooltip = LazyTooltip.addToComponent(component);
-            lazyTooltip.setTooltipHandler(new LazyTooltipHandler() {
-                @Override
-                public void generateTooltip(LazyTooltipUpdater updater) {
-                    int n = random.nextInt(fruits.length);
-                    updater.updateTooltip("I am a lazy " + fruits[n]);
-                }
+            lazyTooltip.setTooltipHandler(updater -> {
+                int n = random.nextInt(fruits.length);
+                updater.updateTooltip("I am a lazy " + fruits[n]);
             });
         }
 
@@ -171,31 +150,31 @@ public class DemoUI extends UI
     private TooltipConfigurator dynamicLazyTooltip = new TooltipConfigurator() {
         public void configureTooltip(AbstractComponent component) {
             LazyTooltip lazyTooltip = LazyTooltip.addToComponent(component);
-            lazyTooltip.setTooltipHandler(new LazyTooltipHandler() {
-                @Override
-                public void generateTooltip(final LazyTooltipUpdater updater) {
-                    final AtomicInteger counter = new AtomicInteger(0);
-                    final Timer timer = new Timer();
-                    timer.scheduleAtFixedRate(new TimerTask() {
-                        public void run() {
-                            String tooltip = null;
-                            int count = counter.getAndIncrement();
-                            if (count < 12) {
-                                tooltip = "Loading...".substring(0, (count % 3) + 8);
-                            } else {
-                                tooltip = "All done!!!";
-                                timer.cancel();
-                            }
-                            asyncTooltipUpdate(updater, tooltip);
-                        }
-                    }, 0, 500);
-                }
-            });
+            lazyTooltip.setTooltipHandler(updater -> timedUpdate(updater, component.getUI()));
         }
 
         public String getTooltipDesccription() {
             return "Lazy tooltip with dynamic updates";
         }
+
+        private void timedUpdate(LazyTooltipUpdater updater, UI ui) {
+            AtomicInteger counter = new AtomicInteger(0);
+            Timer timer = new Timer();
+            timer.scheduleAtFixedRate(new TimerTask() {
+                public void run() {
+                    final String tooltip;
+                    int count = counter.getAndIncrement();
+                    if (count < 12) {
+                        tooltip = "Loading...".substring(0, (count % 3) + 8);
+                    } else {
+                        tooltip = "All done!!!";
+                        timer.cancel();
+                    }
+                    ui.access(() -> updater.updateTooltip(tooltip));
+                }
+            }, 0, 500);
+        }
+
     };
 
 }
