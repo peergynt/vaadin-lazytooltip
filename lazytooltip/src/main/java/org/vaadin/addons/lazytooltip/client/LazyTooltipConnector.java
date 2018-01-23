@@ -13,7 +13,6 @@ import com.vaadin.shared.ui.Connect;
 
 import org.vaadin.addons.lazytooltip.LazyTooltip;
 
-@SuppressWarnings("javadoc")
 @Connect(LazyTooltip.class)
 public class LazyTooltipConnector extends AbstractExtensionConnector {
 
@@ -24,18 +23,13 @@ public class LazyTooltipConnector extends AbstractExtensionConnector {
     private LazyTooltipServerRpc rpc = RpcProxy.create(LazyTooltipServerRpc.class, this);
 
     @Override
-    @SuppressWarnings("serial")
     protected void extend(ServerConnector target) {
         connector = (AbstractComponentConnector) target;
-        registerRpc(LazyTooltipClientRpc.class, new LazyTooltipClientRpc() {
-            @Override
-            public void updateTooltip(long tooltipId, String elementId, String tooltipText) {
-                // FIXME: should we fire an event here to update the tooltip internally?
-                if (getWidget().isActiveTooltip(tooltipId)) {
-                    Logger.getLogger(LazyTooltipConnector.class.getName()).finer("(LZT) updating tooltip " + tooltipId + " in client");
-                    getWidget().updateTooltip(elementId, tooltipText);
-                }
-            }
+        registerRpc(LazyTooltipClientRpc.class, (tooltipId, elementId, tooltipText) -> {
+            if (getWidget().isActiveTooltip(tooltipId)) {
+                getLogger().finer("(LZT) updating tooltip " + tooltipId + " in client");
+                getWidget().updateTooltip(elementId, tooltipText);
+            };
         });
     }
 
@@ -58,7 +52,7 @@ public class LazyTooltipConnector extends AbstractExtensionConnector {
         }
         String widgetID = widget.getElement().getId();
         long tooltipId = getWidget().getNewTooltipId();
-        Logger.getLogger(LazyTooltipConnector.class.getName()).finer("(LZT) request tooltip update for tooltip " +
+        getLogger().finer("(LZT) request tooltip update for tooltip " +
                          tooltipId + " (class=" + className + ", widget=" + widgetID + ")");
         rpc.updateTooltip(tooltipId, className, widgetID);
         return new LazyTooltipInfo("Loading...", connector.getState().errorMessage);
@@ -66,6 +60,10 @@ public class LazyTooltipConnector extends AbstractExtensionConnector {
 
     public VLazyTooltip getWidget() {
         return (VLazyTooltip) connector.getConnection().getVTooltip();
+    }
+
+    private static Logger getLogger() {
+        return Logger.getLogger(LazyTooltipConnector.class.getName());
     }
 
 }

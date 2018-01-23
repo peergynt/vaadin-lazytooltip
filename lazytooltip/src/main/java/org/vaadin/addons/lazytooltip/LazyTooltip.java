@@ -8,14 +8,13 @@ import org.vaadin.addons.lazytooltip.client.LazyTooltipServerRpc;
 import org.vaadin.addons.lazytooltip.client.LazyTooltipState;
 
 import com.vaadin.server.AbstractExtension;
-import com.vaadin.server.Extension;
 import com.vaadin.ui.AbstractComponent;
 
-@SuppressWarnings("unused")
 public class LazyTooltip extends AbstractExtension implements LazyTooltipServerRpc {
 
     private static final long serialVersionUID = 1L;
 
+    @SuppressWarnings("unused")
     private final AbstractComponent component;
     private final Map<String, LazyTooltipHandler> handlers = new HashMap<String, LazyTooltipHandler>();
 
