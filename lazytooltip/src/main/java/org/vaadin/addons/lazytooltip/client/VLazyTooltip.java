@@ -2,15 +2,31 @@ package org.vaadin.addons.lazytooltip.client;
 
 import java.util.logging.Logger;
 
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ApplicationConnection;
@@ -21,12 +37,16 @@ import com.vaadin.client.TooltipInfo;
 import com.vaadin.client.Util;
 import com.vaadin.client.VErrorMessage;
 import com.vaadin.client.VTooltip;
+import com.vaadin.client.WidgetUtil;
 
 public class VLazyTooltip extends VTooltip {
     private static final int MARGIN = 4;
+    public static final int TOOLTIP_EVENTS = Event.ONKEYDOWN | Event.ONMOUSEOVER
+            | Event.ONMOUSEOUT | Event.ONMOUSEMOVE | Event.ONCLICK;
+    private static final int EVENT_XY_POSITION_OUTSIDE = -5000;
 
     VErrorMessage em = new VErrorMessage();
-    Element description = DOM.createDiv();
+    HTML description = GWT.create(HTML.class);
 
     private TooltipInfo currentTooltipInfo = new TooltipInfo(" ");
 
@@ -52,13 +72,16 @@ public class VLazyTooltip extends VTooltip {
      */
     private com.google.gwt.dom.client.Element currentElement = null;
 
+    private int tooltipEventMouseX;
+    private int tooltipEventMouseY;
+
     private LazyTooltipConnector lazyTooltipConnector;
 
     /**
      * Used to show tooltips; usually used via the singleton in
      * {@link ApplicationConnection}. NOTE that #setOwner(Widget)} should be
      * called after instantiating.
-     * 
+     *
      * @see ApplicationConnection#getVTooltip()
      */
     public VLazyTooltip() {
@@ -67,13 +90,13 @@ public class VLazyTooltip extends VTooltip {
         FlowPanel layout = new FlowPanel();
         setWidget(layout);
         layout.add(em);
-        description.setPropertyString("className", getStyleName() + "-text");
-        DOM.appendChild(layout.getElement(), description);
+        description.setStyleName(getStyleName() + "-text");
+        layout.add(description);
     }
 
     /**
      * Show the tooltip with the provided info for assistive devices.
-     * 
+     *
      * @param info
      *            with the content of the tooltip
      */
@@ -85,7 +108,7 @@ public class VLazyTooltip extends VTooltip {
 
     /**
      * Initialize the tooltip overlay for assistive devices.
-     * 
+     *
      * @since 7.2.4
      */
     public void initializeAssistiveTooltips() {
@@ -93,45 +116,65 @@ public class VLazyTooltip extends VTooltip {
         setTooltipText(new TooltipInfo(" "));
         showTooltip();
         hideTooltip();
-        description.getParentElement().getStyle().clearWidth();
+        description.getParent().getElement().getStyle().clearWidth();
     }
 
     private void setTooltipText(TooltipInfo info) {
-        if (info.getErrorMessage() != null && !info.getErrorMessage().isEmpty()) {
+        if (info.getErrorMessage() != null
+                && !info.getErrorMessage().isEmpty()) {
             em.setVisible(true);
             em.updateMessage(info.getErrorMessage());
+            em.updateErrorLevel(info.getErrorLevel());
         } else {
             em.setVisible(false);
         }
         if (info.getTitle() != null && !info.getTitle().isEmpty()) {
-            description.setInnerHTML(info.getTitle());
+            switch (info.getContentMode()) {
+            case HTML:
+                description.setHTML(info.getTitle());
+                break;
+            case TEXT:
+                description.setText(info.getTitle());
+                break;
+            case PREFORMATTED:
+                PreElement preElement = Document.get().createPreElement();
+                preElement.addClassName(getStyleName() + "-pre");
+                preElement.setInnerText(info.getTitle());
+                // clear existing content
+                description.setHTML("");
+                // add preformatted text to dom
+                description.getElement().appendChild(preElement);
+                break;
+            default:
+                break;
+            }
             /*
              * Issue #11871: to correctly update the offsetWidth of description
              * element we need to clear style width of its parent DIV from old
              * value (in some strange cases this width=[tooltip MAX_WIDTH] after
              * tooltip text has been already updated to new shortly value:
-             * 
+             *
              * <div class="popupContent"> <div style="width:500px;"> <div
              * class="v-errormessage" aria-hidden="true" style="display: none;">
              * <div class="gwt-HTML"> </div> </div> <div
              * class="v-tooltip-text">This is a short tooltip</div> </div>
-             * 
+             *
              * and it leads to error during calculation offsetWidth (it is
              * native GWT method getSubPixelOffsetWidth()) of description
              * element")
              */
-            description.getParentElement().getStyle().clearWidth();
-            description.getStyle().clearDisplay();
+            description.getParent().getElement().getStyle().clearWidth();
+            description.getElement().getStyle().clearDisplay();
         } else {
-            description.setInnerHTML("");
-            description.getStyle().setDisplay(Display.NONE);
+            description.setHTML("");
+            description.getElement().getStyle().setDisplay(Display.NONE);
         }
         currentTooltipInfo = info;
     }
 
     /**
      * Show a popup containing the currentTooltipInfo
-     * 
+     *
      */
     private void showTooltip() {
         if (currentTooltipInfo.hasMessage()) {
@@ -175,7 +218,7 @@ public class VLazyTooltip extends VTooltip {
                  * Return the final X-coordinate of the tooltip based on cursor
                  * position, size of the tooltip, size of the page and necessary
                  * margins.
-                 * 
+                 *
                  * @param offsetWidth
                  * @return The final X-coordinate
                  */
@@ -190,8 +233,9 @@ public class VLazyTooltip extends VTooltip {
                         x = tooltipEventMouseX + Window.getScrollLeft() - 10
                                 - offsetWidth;
                     }
-                    if (x + offsetWidth + MARGIN - Window.getScrollLeft() > Window
-                            .getClientWidth()) {
+                    if (x + offsetWidth + MARGIN
+                            - Window.getScrollLeft() > Window
+                                    .getClientWidth()) {
                         x = Window.getClientWidth() - offsetWidth - MARGIN
                                 + Window.getScrollLeft();
                     }
@@ -217,8 +261,9 @@ public class VLazyTooltip extends VTooltip {
                 private int getFinalTouchX(int offsetWidth) {
                     int x = 0;
                     int widthNeeded = 10 + offsetWidth;
-                    int roomLeft = currentElement != null ? currentElement
-                            .getAbsoluteLeft() : EVENT_XY_POSITION_OUTSIDE;
+                    int roomLeft = currentElement != null
+                            ? currentElement.getAbsoluteLeft()
+                            : EVENT_XY_POSITION_OUTSIDE;
                     int viewPortWidth = Window.getClientWidth();
                     int roomRight = viewPortWidth - roomLeft;
                     if (roomRight > widthNeeded) {
@@ -226,7 +271,8 @@ public class VLazyTooltip extends VTooltip {
                     } else {
                         x = roomLeft - offsetWidth;
                     }
-                    if (x + offsetWidth - Window.getScrollLeft() > viewPortWidth) {
+                    if (x + offsetWidth
+                            - Window.getScrollLeft() > viewPortWidth) {
                         x = viewPortWidth - offsetWidth
                                 + Window.getScrollLeft();
                     }
@@ -245,10 +291,10 @@ public class VLazyTooltip extends VTooltip {
                  * Return the final Y-coordinate of the tooltip based on cursor
                  * position, size of the tooltip, size of the page and necessary
                  * margins.
-                 * 
+                 *
                  * @param offsetHeight
                  * @return The final y-coordinate
-                 * 
+                 *
                  */
                 private int getFinalY(int offsetHeight) {
                     int y = 0;
@@ -263,8 +309,9 @@ public class VLazyTooltip extends VTooltip {
                                 - offsetHeight;
                     }
 
-                    if (y + offsetHeight + MARGIN - Window.getScrollTop() > Window
-                            .getClientHeight()) {
+                    if (y + offsetHeight + MARGIN
+                            - Window.getScrollTop() > Window
+                                    .getClientHeight()) {
                         y = tooltipEventMouseY - 5 - offsetHeight
                                 + Window.getScrollTop();
                         if (y - Window.getScrollTop() < 0) {
@@ -296,19 +343,19 @@ public class VLazyTooltip extends VTooltip {
                 private int getFinalTouchY(int offsetHeight) {
                     int y = 0;
                     int heightNeeded = 10 + offsetHeight;
-                    int roomAbove = currentElement != null ? currentElement
-                            .getAbsoluteTop()
-                            + currentElement.getOffsetHeight()
+                    int roomAbove = currentElement != null
+                            ? currentElement.getAbsoluteTop()
+                                    + currentElement.getOffsetHeight()
                             : EVENT_XY_POSITION_OUTSIDE;
                     int roomBelow = Window.getClientHeight() - roomAbove;
 
                     if (roomBelow > heightNeeded) {
                         y = roomAbove;
                     } else {
-                        y = roomAbove
-                                - offsetHeight
-                                - (currentElement != null ? currentElement
-                                        .getOffsetHeight() : 0);
+                        y = roomAbove - offsetHeight
+                                - (currentElement != null
+                                        ? currentElement.getOffsetHeight()
+                                        : 0);
                     }
 
                     if (y + offsetHeight - Window.getScrollTop() > Window
@@ -342,7 +389,7 @@ public class VLazyTooltip extends VTooltip {
      * and attached to the DOM well in advance. For this reason both isShowing
      * and isVisible return false positives. We can't override either of them as
      * external code may depend on this behavior.
-     * 
+     *
      * @return boolean
      */
     public boolean isTooltipOpen() {
@@ -405,15 +452,12 @@ public class VLazyTooltip extends VTooltip {
     @Override
     public void hide() {
         em.updateMessage("");
-        description.setInnerHTML("");
+        em.updateErrorLevel(null);
+        description.setHTML("");
 
         updatePosition(null, true);
         setPopupPosition(tooltipEventMouseX, tooltipEventMouseY);
     }
-
-    private int EVENT_XY_POSITION_OUTSIDE = -5000;
-    private int tooltipEventMouseX;
-    private int tooltipEventMouseY;
 
     public void updatePosition(Event event, boolean isFocused) {
         tooltipEventMouseX = getEventX(event, isFocused);
@@ -421,11 +465,13 @@ public class VLazyTooltip extends VTooltip {
     }
 
     private int getEventX(Event event, boolean isFocused) {
-        return isFocused ? EVENT_XY_POSITION_OUTSIDE : event.getClientX();
+        return isFocused ? EVENT_XY_POSITION_OUTSIDE
+                : DOM.eventGetClientX(event);
     }
 
     private int getEventY(Event event, boolean isFocused) {
-        return isFocused ? EVENT_XY_POSITION_OUTSIDE : event.getClientY();
+        return isFocused ? EVENT_XY_POSITION_OUTSIDE
+                : DOM.eventGetClientY(event);
     }
 
     @Override
@@ -439,11 +485,13 @@ public class VLazyTooltip extends VTooltip {
             // tooltip
             closeTimer.cancel();
             closing = false;
+        } else if (type == Event.ONMOUSEOUT) {
+            tooltipEventHandler.handleOnMouseOut(DOM.eventGetTarget(event));
         }
     }
 
     /**
-     * Replace current open tooltip with new content
+     * Replace current open tooltip with new content.
      */
     public void replaceCurrentTooltip() {
         if (closing) {
@@ -457,8 +505,9 @@ public class VLazyTooltip extends VTooltip {
         opening = false;
     }
 
-    private class TooltipEventHandler implements MouseMoveHandler,
-            KeyDownHandler, FocusHandler, BlurHandler, MouseDownHandler {
+    private class TooltipEventHandler
+            implements MouseMoveHandler, KeyDownHandler, FocusHandler,
+            BlurHandler, MouseDownHandler, MouseOutHandler {
 
         /**
          * Marker for handling of tooltip through focus
@@ -467,7 +516,7 @@ public class VLazyTooltip extends VTooltip {
 
         /**
          * Locate the tooltip for given element
-         * 
+         *
          * @param element
          *            Element used in search
          * @return TooltipInfo if connector and tooltip found, null if not
@@ -530,7 +579,7 @@ public class VLazyTooltip extends VTooltip {
 
         /**
          * Handle hide event
-         * 
+         *
          */
         private void handleHideEvent() {
             hideTooltip();
@@ -557,7 +606,7 @@ public class VLazyTooltip extends VTooltip {
 
         /**
          * Displays Tooltip when page is navigated with the keyboard.
-         * 
+         *
          * Tooltip is not visible. This makes it possible for assistive devices
          * to recognize the tooltip.
          */
@@ -568,7 +617,7 @@ public class VLazyTooltip extends VTooltip {
 
         /**
          * Hides Tooltip when the page is navigated with the keyboard.
-         * 
+         *
          * Removes the Tooltip from page to make sure assistive devices don't
          * recognize it by accident.
          */
@@ -595,7 +644,7 @@ public class VLazyTooltip extends VTooltip {
             }
 
             // We can ignore move event if it's handled by move or over already
-            if (currentElement == element && handledByFocus == true) {
+            if (currentElement == element && handledByFocus) {
                 return;
             }
 
@@ -663,17 +712,51 @@ public class VLazyTooltip extends VTooltip {
             handledByFocus = isFocused;
             currentElement = element;
         }
+
+        @Override
+        public void onMouseOut(MouseOutEvent moe) {
+            Element element = WidgetUtil
+                    .getElementUnderMouse(moe.getNativeEvent());
+            handleOnMouseOut(element);
+        }
+
+        private void handleOnMouseOut(Element element) {
+            if (element == null) {
+                // hide if mouse is outside of browser window
+                handleHideEvent();
+            } else {
+                Widget owner = getOwner();
+                if (owner != null && !owner.getElement().isOrHasChild(element)
+                        && !hasCommonOwner(owner, element)) {
+                    // hide if mouse is no longer within the UI nor an overlay
+                    // that belongs to the UI, e.g. a Window
+                    handleHideEvent();
+                }
+            }
+        }
+
+        private boolean hasCommonOwner(Widget owner, Element element) {
+            ComponentConnector connector = Util
+                    .findPaintable(getApplicationConnection(), element);
+            if (connector != null && connector.getConnection() != null
+                    && connector.getConnection().getUIConnector() != null) {
+                return owner.equals(
+                        connector.getConnection().getUIConnector().getWidget());
+            }
+            return false;
+        }
     }
 
     private final TooltipEventHandler tooltipEventHandler = new TooltipEventHandler();
 
     /**
      * Connects DOM handlers to widget that are needed for tooltip presentation.
-     * 
+     *
      * @param widget
      *            Widget which DOM handlers are connected
      */
     public void connectHandlersToWidget(Widget widget) {
+        widget.addDomHandler(tooltipEventHandler, MouseOutEvent.getType());
         widget.addDomHandler(tooltipEventHandler, MouseMoveEvent.getType());
         widget.addDomHandler(tooltipEventHandler, MouseDownEvent.getType());
         widget.addDomHandler(tooltipEventHandler, KeyDownEvent.getType());
@@ -683,7 +766,7 @@ public class VLazyTooltip extends VTooltip {
 
     /**
      * Returns the unique id of the tooltip element.
-     * 
+     *
      * @return String containing the unique id of the tooltip, which always has
      *         a value
      */
@@ -704,7 +787,7 @@ public class VLazyTooltip extends VTooltip {
      * Returns the time (in ms) the tooltip should be displayed after an event
      * that will cause it to be closed (e.g. mouse click outside the component,
      * key down).
-     * 
+     *
      * @return The close timeout (in ms)
      */
     public int getCloseTimeout() {
@@ -715,7 +798,7 @@ public class VLazyTooltip extends VTooltip {
      * Sets the time (in ms) the tooltip should be displayed after an event that
      * will cause it to be closed (e.g. mouse click outside the component, key
      * down).
-     * 
+     *
      * @param closeTimeout
      *            The close timeout (in ms)
      */
@@ -728,7 +811,7 @@ public class VLazyTooltip extends VTooltip {
      * be used instead of {@link #getOpenDelay()}. The quick open delay is used
      * when the tooltip has very recently been shown, is currently hidden but
      * about to be shown again.
-     * 
+     *
      * @return The quick open timeout (in ms)
      */
     public int getQuickOpenTimeout() {
@@ -740,7 +823,7 @@ public class VLazyTooltip extends VTooltip {
      * should be used instead of {@link #getOpenDelay()}. The quick open delay
      * is used when the tooltip has very recently been shown, is currently
      * hidden but about to be shown again.
-     * 
+     *
      * @param quickOpenTimeout
      *            The quick open timeout (in ms)
      */
@@ -752,7 +835,7 @@ public class VLazyTooltip extends VTooltip {
      * Returns the time (in ms) that should elapse before a tooltip will be
      * shown, in the situation when a tooltip has very recently been shown
      * (within {@link #getQuickOpenDelay()} ms).
-     * 
+     *
      * @return The quick open delay (in ms)
      */
     public int getQuickOpenDelay() {
@@ -763,7 +846,7 @@ public class VLazyTooltip extends VTooltip {
      * Sets the time (in ms) that should elapse before a tooltip will be shown,
      * in the situation when a tooltip has very recently been shown (within
      * {@link #getQuickOpenDelay()} ms).
-     * 
+     *
      * @param quickOpenDelay
      *            The quick open delay (in ms)
      */
@@ -776,7 +859,7 @@ public class VLazyTooltip extends VTooltip {
      * tooltip showing has occurred (e.g. mouse over) before the tooltip is
      * shown. If a tooltip has recently been shown, then
      * {@link #getQuickOpenDelay()} is used instead of this.
-     * 
+     *
      * @return The open delay (in ms)
      */
     public int getOpenDelay() {
@@ -788,7 +871,7 @@ public class VLazyTooltip extends VTooltip {
      * tooltip showing has occurred (e.g. mouse over) before the tooltip is
      * shown. If a tooltip has recently been shown, then
      * {@link #getQuickOpenDelay()} is used instead of this.
-     * 
+     *
      * @param openDelay
      *            The open delay (in ms)
      */
@@ -798,7 +881,7 @@ public class VLazyTooltip extends VTooltip {
 
     /**
      * Sets the maximum width of the tooltip popup.
-     * 
+     *
      * @param maxWidth
      *            The maximum width the tooltip popup (in pixels)
      */
@@ -808,7 +891,7 @@ public class VLazyTooltip extends VTooltip {
 
     /**
      * Returns the maximum width of the tooltip popup.
-     * 
+     *
      * @return The maximum width the tooltip popup (in pixels)
      */
     public int getMaxWidth() {
