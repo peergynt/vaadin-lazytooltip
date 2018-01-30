@@ -1,6 +1,10 @@
 # vaadin-lazytooltip
 
-Lazy Tooltip Add-on is an add-on for [Vaadin](https://vaadin.com). It requires Vaadin 7.3+.
+Lazy Tooltip Add-on is an add-on for [Vaadin](https://vaadin.com).
+
+Version 2.0.0 can be used with Vaadin 8.2+ (master branch).
+
+Version 1.0.0 can be used with Vaadin 7.3+ (vaadin7 branch).
 
 ## Installation
 
