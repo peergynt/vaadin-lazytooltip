@@ -30,6 +30,11 @@
 		</license>
 	</licenses>
 
+	<organization>
+		<name>Vaadin Community</name>
+		<url>http://vaadin.com/forum/</url>
+	</organization>
+
 	<repositories>
 		<repository>
 			<id>vaadin-addons</id>
